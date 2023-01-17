@@ -80,7 +80,7 @@ class Loader extends PluginBase implements Listener{
                case 'remove':
                if(isset($this->remove[$sender->getName()])){
                    unset($this->remove[$sender->getName()]);
-                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC delete mode success"));
+                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC delete mode successfully"));
                }else{
                    $this->remove[$sender->getName()] = true;
                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to delete"));
@@ -89,7 +89,7 @@ class Loader extends PluginBase implements Listener{
                case 'id':
                if(isset($this->id[$sender->getName()])){
                    unset($this->id[$sender->getName()]);
-                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC check id mode successful"));
+                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC check id mode successfully"));
                }else{
                    $this->id[$sender->getName()] = true;
                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to id"));
