@@ -73,7 +73,7 @@ class Loader extends PluginBase implements Listener{
                    $entity->setNameTag($args[1]);
                    $entity->spawnToAll();
                    $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
-                }else $sender->sendMessage(TextFormat::colorize("&aData Correct"));
+                }else $sender->sendMessage(TextFormat::colorize("&aWrong Data"));
                 }else $sender->sendMessage(TextFormat::colorize("&a/hnpc spawn <name>"));
                break;
                case 'delete':
