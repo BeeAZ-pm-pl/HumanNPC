@@ -1,4 +1,5 @@
 # HumanNPC
+<img src='icon.png'>
 the NPC plugin for PocketMine-MP.
 # Command
 /hnpc
