@@ -141,16 +141,16 @@ class Loader extends PluginBase implements Listener{
 }
 
     public function onClick(EntityDamageEvent $event){
-      if($event instanceof EntityDamageByEntityEvent){
-         $damager = $event->getDamager();
-         $entity = $event->getEntity();
-      if($damager instanceof Player){
-         if($entity instanceof HumanNPC){
-            $event->cancel();
-      if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
+       if($event instanceof EntityDamageByEntityEvent){
+          $damager = $event->getDamager();
+          $entity = $event->getEntity();
+       if($damager instanceof Player){
+          if($entity instanceof HumanNPC){
+             $event->cancel();
+       if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
             $this->getServer()->dispatchCommand(new ConsoleCommandSender($this->getServer(), $this->getServer()->getLanguage()), str_replace('{player}', '"'.$damager->getName().'"', $entity->getCommands()));
-      }
-      if(isset($this->id[$damager->getName()])){
+       }
+       if(isset($this->id[$damager->getName()])){
            $event->cancel();
            $damager->sendMessage(TextFormat::colorize('&aEntity ID : '.$entity->getId()));
            unset($this->id[$damager->getName()]);
@@ -165,36 +165,35 @@ class Loader extends PluginBase implements Listener{
     }
   }
   public function onMove(PlayerMoveEvent $ev) {
-		$player = $ev->getPlayer();
-		$from = $ev->getFrom();
-		$to = $ev->getTo();
-
-		if($from->distance($to) < 0.1) {
-			return;
-		}
-		$maxDistance = 16;
-		foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
-			if($e instanceof Player){
-				continue;
-			}
-			$xdiff = $player->getLocation()->x - $e->getLocation()->x;
-			$zdiff = $player->getLocation()->z - $e->getLocation()->z;
-			$angle = atan2($zdiff, $xdiff);
-			$yaw = (($angle * 180) / M_PI) - 90;
-			$ydiff = $player->getLocation()->y - $e->getLocation()->y;
-			$v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
-			$dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
-			$angle = atan2($dist, $ydiff);
-			$pitch = (($angle * 180) / M_PI) - 90;
-			if($e instanceof HumanNPC){
-				$pk = new MovePlayerPacket();
-				$pk->actorRuntimeId = $e->getId();
-        $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
-        $pk->yaw = $yaw;
-        $pk->pitch = $pitch;
-        $pk->headYaw = $yaw;
-        $pk->onGround = $e->onGround;
-				$player->getNetworkSession()->sendDataPacket($pk);
+     $player = $ev->getPlayer();
+     $from = $ev->getFrom();
+     $to = $ev->getTo();
+     if($from->distance($to) < 0.1) {
+	return;
+     }
+     $maxDistance = 16;
+	foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
+		if($e instanceof Player){
+		  continue;
+	        }
+		$xdiff = $player->getLocation()->x - $e->getLocation()->x;
+		$zdiff = $player->getLocation()->z - $e->getLocation()->z;
+		$angle = atan2($zdiff, $xdiff);
+		$yaw = (($angle * 180) / M_PI) - 90;
+		$ydiff = $player->getLocation()->y - $e->getLocation()->y;
+		$v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
+		$dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
+		$angle = atan2($dist, $ydiff);
+		$pitch = (($angle * 180) / M_PI) - 90;
+		if($e instanceof HumanNPC){
+		   $pk = new MovePlayerPacket();
+		   $pk->actorRuntimeId = $e->getId();
+                   $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
+                   $pk->yaw = $yaw;
+                   $pk->pitch = $pitch;
+                   $pk->headYaw = $yaw;
+                   $pk->onGround = $e->onGround;
+		   $player->getNetworkSession()->sendDataPacket($pk);
       }
       }
    }
