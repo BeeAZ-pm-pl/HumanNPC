@@ -6,4 +6,4 @@ the NPC plugin for PocketMine-MP.
 /hnpc
 
 # Notice
-The plugin only supports getting skins from players not supporting other entities
+The plugin only supports getting skins from players not supporting skin mobs
