@@ -1,0 +1,20 @@
+name: HumanNPC
+version: 0.0.1
+main: BeeAZ\HumanNPC\Loader
+author: BeeAZ
+api: 5.0.0
+locate: VietNam
+website: https://www.dfmc.site/
+
+commands:
+  hnpc:
+   description: HumanNPC Commands
+   permission: hnpc.command
+  rca:
+   description: Rca Commands
+   permission: hnpc.rca
+permissions:
+  hnpc.command:
+   default: op
+  hnpc.rca:
+   default: op
