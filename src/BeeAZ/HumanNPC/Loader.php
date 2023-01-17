@@ -135,7 +135,7 @@ class Loader extends PluginBase implements Listener{
               break; 
             }
             }else $sender->sendMessage(TextFormat::colorize('&a/hnpc <spawn|remove|id|edit>'));
-        }else $sender->sendMessage('Please use command ingame');
+        }else $sender->sendMessage('Please use command in game');
       return true;
     }
 }
