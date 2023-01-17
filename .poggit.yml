@@ -1,0 +1,9 @@
+--- # Poggit-CI Manifest. Open the CI at https://poggit.pmmp.io/ci/BeeAZ-pm-pl/HumanNPC
+build-by-default: true
+branches:
+- master
+projects:
+  HumanNPC:
+    path: ""
+    lint: false
+...
