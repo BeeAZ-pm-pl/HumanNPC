@@ -77,28 +77,28 @@ class Loader extends PluginBase implements Listener{
                    $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
                 }else $sender->sendMessage(TextFormat::colorize("&aData must be type string"));
                 }else $sender->sendMessage(TextFormat::colorize("&a/hnpc spawn <name>"));
-               break;
-               case 'delete':
-               case 'remove':
-               if(isset($this->remove[$sender->getName()])){
+              break;
+              case 'delete':
+              case 'remove':
+              if(isset($this->remove[$sender->getName()])){
                    unset($this->remove[$sender->getName()]);
                    $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC delete mode successfully"));
-               }else{
+              }else{
                    $this->remove[$sender->getName()] = true;
                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to delete"));
-               }
-               break;
-               case 'id':
-               if(isset($this->id[$sender->getName()])){
+              }
+              break;
+              case 'id':
+              if(isset($this->id[$sender->getName()])){
                    unset($this->id[$sender->getName()]);
                    $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC check id mode successfully"));
-               }else{
+              }else{
                    $this->id[$sender->getName()] = true;
                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to id"));
-               }
-               break;
-               case 'edit':
-               if(isset($args[1]) && isset($args[2])){
+              }
+              break;
+              case 'edit':
+              if(isset($args[1]) && isset($args[2])){
                   if(is_numeric($args[1])){
                     $id = (int)$args[1];
                     $entity = $this->getServer()->getWorldManager()->findEntity($id);
@@ -199,13 +199,13 @@ class Loader extends PluginBase implements Listener{
 			if($e instanceof HumanNPC){
 				$pk = new MovePlayerPacket();
 				$pk->actorRuntimeId = $e->getId();
-        $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
-        $pk->yaw = $yaw;
-        $pk->pitch = $pitch;
-        $pk->headYaw = $yaw;
-        $pk->onGround = $e->onGround;
+                                $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
+                                $pk->yaw = $yaw;
+                                $pk->pitch = $pitch;
+                                $pk->headYaw = $yaw;
+                                $pk->onGround = $e->onGround;
 				$player->getNetworkSession()->sendDataPacket($pk);
-      }
-      }
+                        }
+               }
    }
 }
