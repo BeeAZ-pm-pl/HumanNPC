@@ -10,6 +10,6 @@ The plugin only supports getting skins from players not supporting skin mobs
 
 # Example AddCommand
 
-Player: /hnpc edit <id> addcmd rca {player} <command>
+Player: /hnpc edit (id) addcmd rca {player} (command)
 <br>
-Console: /hnpc edit <id> addcmd <command>
+Console: /hnpc edit (id) addcmd (command)
