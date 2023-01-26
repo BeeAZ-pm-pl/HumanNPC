@@ -45,7 +45,7 @@ class Loader extends PluginBase implements Listener{
             $sender->sendMessage(TextFormat::colorize("&a/rca <name> <command>"));
             return true;
           }
-          $player = $this->getServer()->getPlayerByExact(array_shift($args));
+          $player = $this->getServer()->getPlayerExact(array_shift($args));
           if($player instanceof Player) {
             $this->getServer()->dispatchCommand($player, trim(implode(" ", $args)));
             return true;
@@ -62,6 +62,8 @@ class Loader extends PluginBase implements Listener{
                case 'create':
                if(isset($args[1])){
                  if(is_string($args[1])){
+                   array_shift($args);
+                   $name = trim(implode(" ", $args));
                    $nbt = CompoundTag::create();
                    $nbt->setTag("Name", new StringTag($sender->getSkin()->getSkinId()));
                    $nbt->setTag("Data", new ByteArrayTag($sender->getSkin()->getSkinData()));
@@ -70,7 +72,7 @@ class Loader extends PluginBase implements Listener{
                    $nbt->setTag("GeometryData", new ByteArrayTag($sender->getSkin()->getGeometryData()));
                    $nbt->setString('commands', '');
                    $entity = new HumanNPC(Location::fromObject($sender->getPosition(), $sender->getPosition()->getWorld(), $sender->getLocation()->getYaw() ?? 0, $sender->getLocation()->getPitch() ?? 0), $sender->getSkin(), $nbt);
-                   $entity->setNameTag($args[1]);
+                   $entity->setNameTag(str_replace("{line}", "\n", TextFormat::colorize($name)));
                    $entity->spawnToAll();
                    $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
                 }else $sender->sendMessage(TextFormat::colorize("&aData must be type string"));
@@ -109,7 +111,11 @@ class Loader extends PluginBase implements Listener{
                     case 'addcmd':
                       if(isset($args[3])){
                       if(is_string($args[3])){
-                          $entity->updateCommand($sender, $args[3]);
+                          array_shift($args);
+                          array_shift($args);
+                          array_shift($args);
+                          $cmd = trim(implode(" ", $args));
+                          $entity->updateCommand($sender, $cmd);
                       }else $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
                     }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> setcmd <command>'));
                     break;
@@ -117,7 +123,11 @@ class Loader extends PluginBase implements Listener{
                     case 'rename':
                       if(isset($args[3])){
                         if(is_string($args[3])){
-                           $entity->updateName($sender, $args[3]);
+                          array_shift($args);
+                          array_shift($args);
+                          array_shift($args);
+                          $name = trim(implode(" ", $args));
+                           $entity->updateName($sender, $name);
                         }else $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
                      }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> name <name>'));
                     break;
@@ -141,16 +151,16 @@ class Loader extends PluginBase implements Listener{
 }
 
     public function onClick(EntityDamageEvent $event){
-       if($event instanceof EntityDamageByEntityEvent){
-          $damager = $event->getDamager();
-          $entity = $event->getEntity();
-       if($damager instanceof Player){
-          if($entity instanceof HumanNPC){
-             $event->cancel();
-       if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
+      if($event instanceof EntityDamageByEntityEvent){
+         $damager = $event->getDamager();
+         $entity = $event->getEntity();
+      if($damager instanceof Player){
+         if($entity instanceof HumanNPC){
+            $event->cancel();
+      if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
             $this->getServer()->dispatchCommand(new ConsoleCommandSender($this->getServer(), $this->getServer()->getLanguage()), str_replace('{player}', '"'.$damager->getName().'"', $entity->getCommands()));
-       }
-       if(isset($this->id[$damager->getName()])){
+      }
+      if(isset($this->id[$damager->getName()])){
            $event->cancel();
            $damager->sendMessage(TextFormat::colorize('&aEntity ID : '.$entity->getId()));
            unset($this->id[$damager->getName()]);
@@ -165,35 +175,36 @@ class Loader extends PluginBase implements Listener{
     }
   }
   public function onMove(PlayerMoveEvent $ev) {
-     $player = $ev->getPlayer();
-     $from = $ev->getFrom();
-     $to = $ev->getTo();
-     if($from->distance($to) < 0.1) {
-	return;
-     }
-     $maxDistance = 16;
-	foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
-		if($e instanceof Player){
-		  continue;
-	        }
-		$xdiff = $player->getLocation()->x - $e->getLocation()->x;
-		$zdiff = $player->getLocation()->z - $e->getLocation()->z;
-		$angle = atan2($zdiff, $xdiff);
-		$yaw = (($angle * 180) / M_PI) - 90;
-		$ydiff = $player->getLocation()->y - $e->getLocation()->y;
-		$v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
-		$dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
-		$angle = atan2($dist, $ydiff);
-		$pitch = (($angle * 180) / M_PI) - 90;
-		if($e instanceof HumanNPC){
-		   $pk = new MovePlayerPacket();
-		   $pk->actorRuntimeId = $e->getId();
-                   $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
-                   $pk->yaw = $yaw;
-                   $pk->pitch = $pitch;
-                   $pk->headYaw = $yaw;
-                   $pk->onGround = $e->onGround;
-		   $player->getNetworkSession()->sendDataPacket($pk);
+		$player = $ev->getPlayer();
+		$from = $ev->getFrom();
+		$to = $ev->getTo();
+
+		if($from->distance($to) < 0.1) {
+			return;
+		}
+		$maxDistance = 16;
+		foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
+			if($e instanceof Player){
+				continue;
+			}
+			$xdiff = $player->getLocation()->x - $e->getLocation()->x;
+			$zdiff = $player->getLocation()->z - $e->getLocation()->z;
+			$angle = atan2($zdiff, $xdiff);
+			$yaw = (($angle * 180) / M_PI) - 90;
+			$ydiff = $player->getLocation()->y - $e->getLocation()->y;
+			$v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
+			$dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
+			$angle = atan2($dist, $ydiff);
+			$pitch = (($angle * 180) / M_PI) - 90;
+			if($e instanceof HumanNPC){
+				$pk = new MovePlayerPacket();
+				$pk->actorRuntimeId = $e->getId();
+        $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
+        $pk->yaw = $yaw;
+        $pk->pitch = $pitch;
+        $pk->headYaw = $yaw;
+        $pk->onGround = $e->onGround;
+				$player->getNetworkSession()->sendDataPacket($pk);
       }
       }
    }

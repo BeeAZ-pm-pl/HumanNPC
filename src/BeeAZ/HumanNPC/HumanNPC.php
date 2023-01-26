@@ -44,16 +44,16 @@ class HumanNPC extends Human{
 
     public function updateCommand($sender, $cmd) {
         $this->command = $cmd;
-        $sender->sendMessage(TextFormat::colorize('&aUpdate Command Successful'));
+        $sender->sendMessage(TextFormat::colorize('&aUpdate Command Successfully'));
     }
 
     public function updateName($sender, $name){
-        $this->setNameTag($name);
-        $sender->sendMessage(TextFormat::colorize('&aUpdate Name Successful'));
+        $this->setNameTag(str_replace("{line}", "\n", TextFormat::colorize($name)));
+        $sender->sendMessage(TextFormat::colorize('&aUpdate Name Successfully'));
     }
 
     public function updateTool($sender, $item){
         $this->getInventory()->setItemInHand($item);
-        $sender->sendMessage(TextFormat::colorize('&aUpdate Tool Successful'));
+        $sender->sendMessage(TextFormat::colorize('&aUpdate Tool Successfully'));
     }
  }
