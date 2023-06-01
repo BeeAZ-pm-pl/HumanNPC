@@ -40,7 +40,7 @@ class Loader extends PluginBase implements Listener{
 
     public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool{
         if($cmd->getName() === 'rca'){
-          if($sender->hasPermission('hnpc.rca')){
+          if($sender->hasPermission('humannpc.rca')){
           if (count($args) < 2) {
             $sender->sendMessage(TextFormat::colorize("&a/rca <name> <command>"));
             return true;
