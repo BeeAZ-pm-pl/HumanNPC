@@ -29,7 +29,7 @@ class HumanNPC extends Human{
         $this->motion->x = 0;
         $this->motion->y = 0;
         $this->motion->z = 0;
-
+        $this->setNoClientPredictions(true);
         return parent::onUpdate($currentTick);
     }
     public function saveNBT(): CompoundTag{
