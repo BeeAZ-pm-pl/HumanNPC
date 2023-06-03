@@ -30,6 +30,10 @@ use pocketmine\math\Vector2;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 
 class Loader extends PluginBase implements Listener{
+  
+    private $id;
+    
+    private $remove;
 
     public function onEnable(): void{
         EntityFactory::getInstance()->register(HumanNPC::class, function (World $world, CompoundTag $nbt): HumanNPC {
