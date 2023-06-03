@@ -1,5 +1,5 @@
 name: HumanNPC
-version: 0.0.2
+version: 0.0.3
 main: BeeAZ\HumanNPC\Loader
 author: BeeAZ
 api: 5.0.0
