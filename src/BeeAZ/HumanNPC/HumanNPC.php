@@ -26,6 +26,9 @@ class HumanNPC extends Human{
     }
 
     public function onUpdate(int $currentTick) :bool{
+        if($this->isOnFire()){
+            $this->extinguish();
+        }      
         $this->motion->x = 0;
         $this->motion->y = 0;
         $this->motion->z = 0;
