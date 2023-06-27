@@ -6,7 +6,7 @@ the NPC plugin for PocketMine-MP.
 /hnpc
 
 # Notice
-The plugin only supports getting skins from players not supporting skin mobs
+The plugin only supports getting skins from players not supporting skin mobs<br>
 Fix kill npc with fire and bow
 # Example AddCommand
 
