@@ -7,7 +7,7 @@ the NPC plugin for PocketMine-MP.
 
 # Notice
 The plugin only supports getting skins from players not supporting skin mobs
-
+Fix kill npc with fire and bow
 # Example AddCommand
 
 Player: /hnpc edit (id) addcmd rca {player} (command)
