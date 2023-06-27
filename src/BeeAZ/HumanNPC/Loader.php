@@ -7,209 +7,235 @@ namespace BeeAZ\HumanNPC;
 use pocketmine\plugin\PluginBase;
 use pocketmine\event\Listener;
 use pocketmine\player\Player;
-use pocketmine\entity\{EntityFactory,
-    EntityDataHelper,
-    Human};
+use pocketmine\entity\{EntityFactory,EntityDataHelper,Human};
 use pocketmine\world\World;
 use pocketmine\entity\Location;
-use pocketmine\nbt\tag\{ByteArrayTag, 
-    CompoundTag, 
-    ListTag, 
-    StringTag, 
-    NameTag};
-use pocketmine\command\{Command,
-    CommandSender};
+use pocketmine\nbt\tag\{ByteArrayTag, CompoundTag, ListTag, StringTag, NameTag};
+use pocketmine\command\{Command,CommandSender};
 use pocketmine\console\ConsoleCommandSender;
-use pocketmine\event\entity\{EntityDamageEvent,
-    EntityDamageByEntityEvent};
+use pocketmine\event\entity\{EntityDamageEvent,EntityDamageByEntityEvent};
 use pocketmine\event\player\PlayerMoveEvent;
-use pocketmine\utils\{Config,
-    TextFormat};
+use pocketmine\utils\{Config,TextFormat};
 use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector2;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 
 class Loader extends PluginBase implements Listener{
-  
+
     private $id;
-    
+
     private $remove;
 
     public function onEnable(): void{
         EntityFactory::getInstance()->register(HumanNPC::class, function (World $world, CompoundTag $nbt): HumanNPC {
             return new HumanNPC(EntityDataHelper::parseLocation($nbt, $world), Human::parseSkinNBT($nbt), $nbt);
         }, ['HumanNPC', 'HumanNPC']);
-		    $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
     public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args) : bool{
         if($cmd->getName() === 'rca'){
-          if($sender->hasPermission('humannpc.rca')){
-          if (count($args) < 2) {
-            $sender->sendMessage(TextFormat::colorize("&a/rca <name> <command>"));
-            return true;
-          }
-          $player = $this->getServer()->getPlayerExact(array_shift($args));
-          if($player instanceof Player) {
-            $this->getServer()->dispatchCommand($player, trim(implode(" ", $args)));
-            return true;
-          }
-          $sender->sendMessage(TextFormat::colorize("&aPlayer Not Found"));
-          }
+            if($sender->hasPermission('humannpc.rca')){
+                if (count($args) < 2) {
+                    $sender->sendMessage(TextFormat::colorize("&a/rca <name> <command>"));
+                    return true;
+                }
+                $player = $this->getServer()->getPlayerExact(array_shift($args));
+                if(!$player instanceof Player) {
+                    $sender->sendMessage(TextFormat::colorize("&aPlayer Not Found"));
+                }
+                $this->getServer()->dispatchCommand($player, trim(implode(" ", $args)));
+                return true;
+            }
             return true;
         }
         if($cmd->getName() === 'hnpc'){
-           if($sender instanceof Player){
-           if(isset($args[0])){
-             switch($args[0]){
-               case 'spawn':
-               case 'create':
-               if(isset($args[1])){
-                 if(is_string($args[1])){
-                   array_shift($args);
-                   $name = trim(implode(" ", $args));
-                   $nbt = CompoundTag::create();
-                   $nbt->setTag("Name", new StringTag($sender->getSkin()->getSkinId()));
-                   $nbt->setTag("Data", new ByteArrayTag($sender->getSkin()->getSkinData()));
-                   $nbt->setTag("CapeData", new ByteArrayTag($sender->getSkin()->getCapeData()));
-                   $nbt->setTag("GeometryName", new StringTag($sender->getSkin()->getGeometryName()));
-                   $nbt->setTag("GeometryData", new ByteArrayTag($sender->getSkin()->getGeometryData()));
-                   $nbt->setString('commands', '');
-                   $entity = new HumanNPC(Location::fromObject($sender->getPosition(), $sender->getPosition()->getWorld(), $sender->getLocation()->getYaw() ?? 0, $sender->getLocation()->getPitch() ?? 0), $sender->getSkin(), $nbt);
-                   $entity->setNameTag(str_replace("{line}", "\n", TextFormat::colorize($name)));
-                   $entity->spawnToAll();
-                   $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
-                }else $sender->sendMessage(TextFormat::colorize("&aData must be type string"));
-                }else $sender->sendMessage(TextFormat::colorize("&a/hnpc spawn <name>"));
-              break;
-              case 'delete':
-              case 'remove':
-              if(isset($this->remove[$sender->getName()])){
-                   unset($this->remove[$sender->getName()]);
-                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC delete mode successfully"));
-              }else{
-                   $this->remove[$sender->getName()] = true;
-                   $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to delete"));
-              }
-              break;
-              case 'id':
-              if(isset($this->id[$sender->getName()])){
-                   unset($this->id[$sender->getName()]);
-                   $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC check id mode successfully"));
-              }else{
-                   $this->id[$sender->getName()] = true;
-                   $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to id"));
-              }
-              break;
-              case 'edit':
-              if(isset($args[1]) && isset($args[2])){
-                  if(is_numeric($args[1])){
-                    $id = (int)$args[1];
-                    $entity = $this->getServer()->getWorldManager()->findEntity($id);
-                  if($entity !== null){
-                  switch($args[2]){
+            if(!$sender instanceof Player){
+                $sender->sendMessage('Please use command in game');
+                return true;
+            }
+            if(!isset($args[0])){
+                $sender->sendMessage(TextFormat::colorize('&a/hnpc <spawn|remove|id|edit>'));
+                return true;
+            }
+            switch($args[0]){
+                case 'spawn':
+                case 'create':
+                if(!isset($args[1])){
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc spawn <name>"));
+                    return true;;
+                }
+                if(!is_string($args[1])){
+                    $sender->sendMessage(TextFormat::colorize("&aData must be type string"));
+                    return true;
+                }
+                array_shift($args);
+                $name = trim(implode(" ", $args));
+                $nbt = CompoundTag::create();
+                $nbt->setTag("Name", new StringTag($sender->getSkin()->getSkinId()));
+                $nbt->setTag("Data", new ByteArrayTag($sender->getSkin()->getSkinData()));
+                $nbt->setTag("CapeData", new ByteArrayTag($sender->getSkin()->getCapeData()));
+                $nbt->setTag("GeometryName", new StringTag($sender->getSkin()->getGeometryName()));
+                $nbt->setTag("GeometryData", new ByteArrayTag($sender->getSkin()->getGeometryData()));
+                $nbt->setString('commands', '');
+                $entity = new HumanNPC(Location::fromObject($sender->getPosition(), $sender->getPosition()->getWorld(), $sender->getLocation()->getYaw() ?? 0, $sender->getLocation()->getPitch() ?? 0), $sender->getSkin(), $nbt);
+                $entity->setNameTag(str_replace("{line}", "\n", TextFormat::colorize($name)));
+                $entity->spawnToAll();
+                $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
+                break;
+
+                case 'delete':
+                case 'remove':
+                if(isset($this->remove[$sender->getName()])){
+                    $this->remove[$sender->getName()] = true;
+                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to delete"));
+                    return true;
+                }
+                unset($this->remove[$sender->getName()]);
+                $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC delete mode successfully"));
+                break;
+                case 'id':
+                if(!isset($this->id[$sender->getName()])){
+                    $this->id[$sender->getName()] = true;
+                    $sender->sendMessage(TextFormat::colorize("&aTap to HumanNPC to id"));
+                    return true;
+                }
+                unset($this->id[$sender->getName()]);
+                $sender->sendMessage(TextFormat::colorize("&aExit HumanNPC check id mode successfully"));
+                break;
+                case 'edit':
+                if(!isset($args[1]) && !isset($args[2])){
+                    $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool>'));
+                    return true;
+                }
+                if(!is_numeric($args[1])){
+                    $sender->sendMessage(TextFormat::colorize('&aData must be type int'));
+                    return true;
+                }
+                $id = (int)$args[1];
+                $entity = $this->getServer()->getWorldManager()->findEntity($id);
+                if($entity == null){
+                    $sender->sendMessage(TextFormat::colorize('&aHumanNPC ID not found'));  
+                }
+                switch($args[2]){
                     case 'setcmd':
                     case 'setcommand':
                     case 'command':
                     case 'cmd':
                     case 'addcmd':
-                      if(isset($args[3])){
-                      if(is_string($args[3])){
-                          array_shift($args);
-                          array_shift($args);
-                          array_shift($args);
-                          $cmd = trim(implode(" ", $args));
-                          $entity->updateCommand($sender, $cmd);
-                      }else $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
-                    }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> setcmd <command>'));
+                    if(!isset($args[3])){
+                        $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> setcmd <command>'));
+                        return true;
+                    }
+                    if(!is_string($args[3])){
+                        $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
+                        return true;
+                    }
+                    array_shift($args);
+                    array_shift($args);
+                    array_shift($args);
+                    $cmd = trim(implode(" ", $args));
+                    $entity->updateCommand($sender, $cmd);
                     break;
                     case 'name':
                     case 'rename':
-                      if(isset($args[3])){
-                        if(is_string($args[3])){
-                          array_shift($args);
-                          array_shift($args);
-                          array_shift($args);
-                          $name = trim(implode(" ", $args));
-                           $entity->updateName($sender, $name);
-                        }else $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
-                     }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> name <name>'));
+                    if(!isset($args[3])){
+                        $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> name <name>'));
+                        return true;
+                    }
+                    if(!is_string($args[3])){
+                        $sender->sendMessage(TextFormat::colorize('&aData must be type string')); 
+                        return true;
+                    }
+                    array_shift($args);
+                    array_shift($args);
+                    array_shift($args);
+                    $name = trim(implode(" ", $args));
+                    $entity->updateName($sender, $name);
                     break;
                     case 'settool':
                     case 'tool':
                     case 'addtool':
-                      if(!$sender->getInventory()->getItemInHand()->equals(VanillaItems::AIR())){
-                           $entity->updateTool($sender, $sender->getInventory()->getItemInHand());
-                      }else $sender->sendMessage(TextFormat::colorize('&aHold item your hand'));
+                    if($sender->getInventory()->getItemInHand()->equals(VanillaItems::AIR())){
+                        $sender->sendMessage(TextFormat::colorize('&aHold item your hand'));      
+                    }
+                    $entity->updateTool($sender, $sender->getInventory()->getItemInHand());
                     break;
-                  }
-               }else $sender->sendMessage(TextFormat::colorize('&aHumanNPC ID not found'));             
-               }else $sender->sendMessage(TextFormat::colorize('&aData must be type int'));
-               }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool>'));     
-              break; 
+                }
+                break; 
             }
-            }else $sender->sendMessage(TextFormat::colorize('&a/hnpc <spawn|remove|id|edit>'));
-        }else $sender->sendMessage('Please use command in game');
-      return true;
+            return true;
+        }
     }
-}
 
-    public function onClick(EntityDamageEvent $event){
-      if($event instanceof EntityDamageByEntityEvent){
-         $damager = $event->getDamager();
-         $entity = $event->getEntity();
-      if($damager instanceof Player){
-         if($entity instanceof HumanNPC){
-            $event->cancel();
-      if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
+    public function onClick(EntityDamageEvent $event) : void{
+        $entity = $event->getEntity();
+        $cause = $event->getCause();
+        if(!$entity instanceof HumanNPC) {
+            return;
+        }
+
+        $event->cancel();
+
+        if(!$event instanceof EntityDamageByEntityEvent){
+            return;
+        }
+
+        $damager = $event->getDamager();
+
+        if(!$damager instanceof Player){
+            return;
+        }
+
+        if($entity->getCommands() !== '' && !isset($this->id[$damager->getName()]) && !isset($this->remove[$damager->getName()])){
             $this->getServer()->dispatchCommand(new ConsoleCommandSender($this->getServer(), $this->getServer()->getLanguage()), str_replace('{player}', '"'.$damager->getName().'"', $entity->getCommands()));
-      }
-      if(isset($this->id[$damager->getName()])){
-           $event->cancel();
-           $damager->sendMessage(TextFormat::colorize('&aEntity ID : '.$entity->getId()));
-           unset($this->id[$damager->getName()]);
-      }
-      if(isset($this->remove[$damager->getName()])){
-           $event->cancel();
-           $entity->close();
-           unset($this->remove[$damager->getName()]);
-      }
-      }
-      }
-    }
-  }
-  public function onMove(PlayerMoveEvent $ev) {
-		$player = $ev->getPlayer();
-		$from = $ev->getFrom();
-		$to = $ev->getTo();
+        }
+        if(isset($this->id[$damager->getName()])){
+            $event->cancel();
+            $damager->sendMessage(TextFormat::colorize('&aEntity ID : '.$entity->getId()));
+            unset($this->id[$damager->getName()]);
+        }
+        if(isset($this->remove[$damager->getName()])){
+            $event->cancel();
+            $entity->close();
+            unset($this->remove[$damager->getName()]);
 
-		if($from->distance($to) < 0.1) {
-			return;
-		}
-		$maxDistance = 16;
-		foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
-			if($e instanceof Player){
-				continue;
-			}
-			$xdiff = $player->getLocation()->x - $e->getLocation()->x;
-			$zdiff = $player->getLocation()->z - $e->getLocation()->z;
-			$angle = atan2($zdiff, $xdiff);
-			$yaw = (($angle * 180) / M_PI) - 90;
-			$ydiff = $player->getLocation()->y - $e->getLocation()->y;
-			$v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
-			$dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
-			$angle = atan2($dist, $ydiff);
-			$pitch = (($angle * 180) / M_PI) - 90;
-			if($e instanceof HumanNPC){
-				$pk = new MovePlayerPacket();
-				$pk->actorRuntimeId = $e->getId();
-                                $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
-                                $pk->yaw = $yaw;
-                                $pk->pitch = $pitch;
-                                $pk->headYaw = $yaw;
-                                $pk->onGround = $e->onGround;
-				$player->getNetworkSession()->sendDataPacket($pk);
-                        }
-               }
-   }
+
+        }
+    }
+
+    public function onMove(PlayerMoveEvent $ev) {
+        $player = $ev->getPlayer();
+        $from = $ev->getFrom();
+        $to = $ev->getTo();
+
+        if($from->distance($to) < 0.1) {
+            return;
+        }
+        $maxDistance = 16;
+        foreach ($player->getWorld()->getNearbyEntities($player->getBoundingBox()->expandedCopy($maxDistance, $maxDistance, $maxDistance), $player) as $e) {
+            if($e instanceof Player){
+                continue;
+            }
+            $xdiff = $player->getLocation()->x - $e->getLocation()->x;
+            $zdiff = $player->getLocation()->z - $e->getLocation()->z;
+            $angle = atan2($zdiff, $xdiff);
+            $yaw = (($angle * 180) / M_PI) - 90;
+            $ydiff = $player->getLocation()->y - $e->getLocation()->y;
+            $v = new Vector2($e->getLocation()->x, $e->getLocation()->z);
+            $dist = $v->distance(new Vector2($player->getLocation()->x, $player->getLocation()->z));
+            $angle = atan2($dist, $ydiff);
+            $pitch = (($angle * 180) / M_PI) - 90;
+            if($e instanceof HumanNPC){
+                $pk = new MovePlayerPacket();
+                $pk->actorRuntimeId = $e->getId();
+                $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
+                $pk->yaw = $yaw;
+                $pk->pitch = $pitch;
+                $pk->headYaw = $yaw;
+                $pk->onGround = $e->onGround;
+                $player->getNetworkSession()->sendDataPacket($pk);
+            }
+        }
+    }
 }
