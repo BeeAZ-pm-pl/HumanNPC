@@ -14,7 +14,7 @@ class HumanNPC extends Human{
 
     private $command = '';
 
-	public function getName() : string{
+    public function getName() : string{
 		return "HumanNPC";
 	}
 
@@ -23,6 +23,7 @@ class HumanNPC extends Human{
         $this->command = $nbt->getString('commands');
         $this->setNameTagAlwaysVisible();
         $this->setNameTagVisible();
+        $this->setHealth(100000000);
     }
 
     public function onUpdate(int $currentTick) :bool{
@@ -30,6 +31,9 @@ class HumanNPC extends Human{
         $this->motion->y = 0;
         $this->motion->z = 0;
         $this->setNoClientPredictions(true);
+        if($this->isOnFire()){
+           $this->extinguish();
+        }
         return parent::onUpdate($currentTick);
     }
     public function saveNBT(): CompoundTag{

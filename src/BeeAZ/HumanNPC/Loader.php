@@ -28,6 +28,8 @@ use pocketmine\utils\{Config,
 use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector2;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
+use BeeAZ\HumanNPC\events\{HNPCCreationEvent, 
+    HNPCDeletionEvent};
 
 class Loader extends PluginBase implements Listener{
   
@@ -77,6 +79,8 @@ class Loader extends PluginBase implements Listener{
                    $nbt->setString('commands', '');
                    $entity = new HumanNPC(Location::fromObject($sender->getPosition(), $sender->getPosition()->getWorld(), $sender->getLocation()->getYaw() ?? 0, $sender->getLocation()->getPitch() ?? 0), $sender->getSkin(), $nbt);
                    $entity->setNameTag(str_replace("{line}", "\n", TextFormat::colorize($name)));
+                   $event = new HNPCCreationEvent($entity, $sender);
+                   $event->call();
                    $entity->spawnToAll();
                    $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with ID: &e".$entity->getId()));
                 }else $sender->sendMessage(TextFormat::colorize("&aData must be type string"));
@@ -131,7 +135,7 @@ class Loader extends PluginBase implements Listener{
                           array_shift($args);
                           array_shift($args);
                           $name = trim(implode(" ", $args));
-                           $entity->updateName($sender, $name);
+                          $entity->updateName($sender, $name);
                         }else $sender->sendMessage(TextFormat::colorize('&aData must be type string'));
                      }else $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> name <name>'));
                     break;
@@ -171,6 +175,8 @@ class Loader extends PluginBase implements Listener{
       }
       if(isset($this->remove[$damager->getName()])){
            $event->cancel();
+           $ev = new HNPCDeletionEvent($entity, $damager);
+           $ev->call();
            $entity->close();
            unset($this->remove[$damager->getName()]);
       }
@@ -203,13 +209,13 @@ class Loader extends PluginBase implements Listener{
 			if($e instanceof HumanNPC){
 				$pk = new MovePlayerPacket();
 				$pk->actorRuntimeId = $e->getId();
-                                $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
-                                $pk->yaw = $yaw;
-                                $pk->pitch = $pitch;
-                                $pk->headYaw = $yaw;
-                                $pk->onGround = $e->onGround;
+        $pk->position = $e->getPosition()->add(0, $e->getEyeHeight(), 0);
+        $pk->yaw = $yaw;
+        $pk->pitch = $pitch;
+        $pk->headYaw = $yaw;
+        $pk->onGround = $e->onGround;
 				$player->getNetworkSession()->sendDataPacket($pk);
-                        }
-               }
-   }
+      }
+      }
+  }
 }
