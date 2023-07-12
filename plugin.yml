@@ -5,7 +5,7 @@ src-namespace-prefix: HumanNPC
 main: HumanNPC\Loader
 api: 5.0.0
 
-author: BeeAZ & me
+author: BeeAZ
 
 commands:
   hnpc:
