@@ -1,18 +1,21 @@
 name: HumanNPC
-version: 0.0.4
-main: BeeAZ\HumanNPC\Loader
-author: BeeAZ
+version: 0.1.0
+
+src-namespace-prefix: HumanNPC
+main: HumanNPC\Loader
 api: 5.0.0
+
+author: BeeAZ & me
 
 commands:
   hnpc:
-   description: HumanNPC Commands
-   permission: humannpc.command
+    description: HumanNPC Commands
+    permission: humannpc.command
   rca:
-   description: Rca Commands
-   permission: humannpc.rca
+    description: Rca Commands
+    permission: humannpc.rca
 permissions:
   humannpc.command:
-   default: op
+    default: op
   humannpc.rca:
-   default: op
+    default: op
