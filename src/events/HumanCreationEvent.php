@@ -2,24 +2,21 @@
 
 declare(strict_types=1);
 
-namespace HumanNPC\events;
+namespace BeeAZ\HumanNPC\events;
 
 use pocketmine\entity\Entity;
 use pocketmine\event\entity\EntityEvent;
 use pocketmine\player\Player;
 
-class HumanCreationEvent extends EntityEvent
-{
+class HumanCreationEvent extends EntityEvent {
     private Player $creator;
 
-    public function __construct(Entity $entity, Player $creator)
-    {
+    public function __construct(Entity $entity, Player $creator) {
         $this->entity = $entity;
         $this->creator = $creator;
     }
 
-    public function getCreator(): Player
-    {
+    public function getCreator(): Player {
         return $this->creator;
     }
 }

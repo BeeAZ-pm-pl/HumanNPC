@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace HumanNPC;
+namespace BeeAZ\HumanNPC;
 
 use HumanNPC\events\HumanCreationEvent;
 use HumanNPC\events\HumanRemoveEvent;
@@ -28,22 +28,20 @@ use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector2;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 
-class Loader extends PluginBase implements Listener
-{
+class Loader extends PluginBase implements Listener {
     private array $id = [];
     private array $remove = [];
 
-    public function onEnable(): void
-    {
+    protected function onEnable(): void {
         EntityFactory::getInstance()->register(HumanNPC::class, function (World $world, CompoundTag $nbt): HumanNPC {
             return new HumanNPC(EntityDataHelper::parseLocation($nbt, $world), Human::parseSkinNBT($nbt), $nbt);
         }, ['HumanNPC', 'HumanNPC']);
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getAsyncPool()->submitTask(new CheckUpdateTask($this->getDescription()->getName(), $this->getDescription()->getVersion()));
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
-    {
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
         if ($command->getName() === 'rca') {
             if ($sender->hasPermission('humannpc.rca')) {
                 if (count($args) < 2) {
@@ -69,7 +67,7 @@ class Loader extends PluginBase implements Listener
             }
 
             if (!isset($args[0])) {
-                $sender->sendMessage(TextFormat::colorize("&a/hnpc <spawn|remove|id|edit>"));
+                $sender->sendMessage(TextFormat::colorize("&a/hnpc <spawn|remove|id|tp|entity|edit>"));
                 return true;
             }
 
@@ -127,17 +125,58 @@ class Loader extends PluginBase implements Listener
                         $sender->sendMessage(TextFormat::colorize("&aTap a HumanNPC to get its ID"));
                     }
                     break;
-
-                case 'edit':
-                    if (count($args) < 3) {
-                        $sender->sendMessage(TextFormat::colorize("&a/hnpc edit <id> <setcmd|rename|settool>"));
+                case 'teleport':
+                case 'tp':
+                case 'goto':
+                case 'tpto':
+                    if (!isset($args[1])) {
+                        $sender->sendMessage(TextFormat::colorize("&aUse /hnpc tp <id>\n&aUse /hnpc entity to get the id and name of all HNPCs in the world loaded"));
                         break;
                     }
 
                     $id = (int)$args[1];
                     $entity = $this->getServer()->getWorldManager()->findEntity($id);
 
-                    if ($entity === null) {
+                    if ($entity === null && !$entity instanceof HumanNPC) {
+                        $sender->sendMessage(TextFormat::colorize("&aHumanNPC ID not found"));
+                        break;
+                    }
+                    $sender->teleport($entity->getLocation());
+                    $sender->sendMessage(TextFormat::colorize('&aTeleported to HNPC ' . $entity->getNameTag() . ' successfully.'));
+                    break;
+                case 'entity':
+                    $all_entity = '';
+                    foreach ($this->getServer()->getWorldManager()->getWorlds() as $world) {
+                        foreach ($world->getEntities() as $entity) {
+                            if ($entity instanceof HumanNPC) {
+                                $id = $entity->getId();
+                                $name = $entity->getNameTag();
+                                $all_entity .= TextFormat::colorize("&a- &c" . $id . ":" . $name . "\n");
+                            }
+                        }
+                    }
+                    $sender->sendMessage(TextFormat::colorize("&aHNPC Entitys: \n" . $all_entity));
+                    break;
+                case '?':
+                case 'help':
+                    $sender->sendMessage(TextFormat::colorize("&aHNPC Commands"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc spawn : &eCreate NPC"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc delete : &eDelete NPC"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc id : &eGet id NPC"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc tp : &eTeleport to NPC"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc entity : &eGet all NPC in the world loaded"));
+                    $sender->sendMessage(TextFormat::colorize("&a/hnpc edit : &eEdit NPC"));
+                    break;
+                case 'edit':
+                    if (count($args) < 3) {
+                        $sender->sendMessage(TextFormat::colorize("&a/hnpc edit <id> <setcmd|rename|settool|setsize>"));
+                        break;
+                    }
+
+                    $id = (int)$args[1];
+                    $entity = $this->getServer()->getWorldManager()->findEntity($id);
+
+                    if ($entity === null && !$entity instanceof HumanNPC) {
                         $sender->sendMessage(TextFormat::colorize("&aHumanNPC ID not found"));
                         break;
                     }
@@ -180,7 +219,7 @@ class Loader extends PluginBase implements Listener
                             break;
 
                         default:
-                            $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool>'));
+                            $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool|setsize>'));
                             break;
                     }
                     break;
@@ -192,8 +231,7 @@ class Loader extends PluginBase implements Listener
         return false;
     }
 
-    public function onClick(EntityDamageEvent $event): void
-    {
+    public function onClick(EntityDamageEvent $event): void {
         if ($event instanceof EntityDamageByEntityEvent) {
             $damager = $event->getDamager();
             $entity = $event->getEntity();
@@ -222,8 +260,7 @@ class Loader extends PluginBase implements Listener
         }
     }
 
-    public function onMove(PlayerMoveEvent $event): void
-    {
+    public function onMove(PlayerMoveEvent $event): void {
         $player = $event->getPlayer();
         $from = $event->getFrom();
         $to = $event->getTo();
