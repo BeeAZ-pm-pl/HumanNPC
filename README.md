@@ -2,9 +2,6 @@
 <center><img src='icon.png' width=150 height=150</img></center>
 A simple npc plugin for PocketMine!
 
-# Command
-/hnpc
-
 # Notice
 The plugin only supports getting skins from players!
 
