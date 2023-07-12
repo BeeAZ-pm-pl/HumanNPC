@@ -169,7 +169,7 @@ class Loader extends PluginBase implements Listener {
                     break;
                 case 'edit':
                     if (count($args) < 3) {
-                        $sender->sendMessage(TextFormat::colorize("&a/hnpc edit <id> <setcmd|rename|settool|setsize>"));
+                        $sender->sendMessage(TextFormat::colorize("&a/hnpc edit <id> <setcmd|rename|settool>"));
                         break;
                     }
 
@@ -219,7 +219,7 @@ class Loader extends PluginBase implements Listener {
                             break;
 
                         default:
-                            $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool|setsize>'));
+                            $sender->sendMessage(TextFormat::colorize('&a/hnpc edit <id> <setcmd|rename|settool>'));
                             break;
                     }
                     break;
