@@ -1,15 +1,12 @@
 # HumanNPC
-<center><img src='icon.png' width=120 height=100</img></center>
-the NPC plugin for PocketMine-MP.
-
-# Command
-/hnpc
+<center><img src='icon.png' width=150 height=150</img></center>
+A simple npc plugin for PocketMine!
 
 # Notice
-The plugin only supports getting skins from players not supporting skin mobs
+The plugin only supports getting skins from players!
 
-# Example AddCommand
-
-Player: /hnpc edit (id) addcmd rca {player} (command)
-<br>
-Console: /hnpc edit (id) addcmd (command)
+# Example Commands
+/hnpc spawn/create <name> -> Spawn a NPC
+/hnpc delete/remove -> Enter NPC delete mode
+/hnpc id -> Enter NPC check id mode
+/hnpc edit <id> <setcmd|rename|settool>
