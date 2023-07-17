@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace BeeAZ\HumanNPC;
 
-use HumanNPC\events\HumanCreationEvent;
-use HumanNPC\events\HumanRemoveEvent;
+use BeeAZ\HumanNPC\events\HumanCreationEvent;
+use BeeAZ\HumanNPC\events\HumanRemoveEvent;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\entity\EntityDataHelper;

@@ -1,5 +1,5 @@
 name: HumanNPC
-version: 0.0.5
+version: 0.0.6
 
 src-namespace-prefix: BeeAZ\HumanNPC
 main: BeeAZ\HumanNPC\Loader
