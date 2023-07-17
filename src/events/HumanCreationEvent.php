@@ -10,7 +10,6 @@ use pocketmine\player\Player;
 
 class HumanCreationEvent extends EntityEvent {
     private Player $creator;
-    private Entity $entity;
 
     public function __construct(Entity $entity, Player $creator) {
         $this->entity = $entity;
