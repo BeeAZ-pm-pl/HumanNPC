@@ -18,6 +18,9 @@ class HumanNPC extends Human {
     public function initEntity(CompoundTag $nbt): void {
         parent::initEntity($nbt);
 
+        if (!$nbt->getTag("commands")) {
+            $nbt->setString("commands", "");
+        }
         $this->command = $nbt->getString('commands');
         $this->setNameTagAlwaysVisible();
         $this->setNameTagVisible();
