@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace BeeAZ\HumanNPC\events;
+namespace beeaz\humannpc\event;
 
 use pocketmine\entity\Entity;
 use pocketmine\event\entity\EntityEvent;
 use pocketmine\player\Player;
 
-class HumanRemoveEvent extends EntityEvent {
+class HumanNPCRemoveEvent extends EntityEvent {
     private ?Player $remover;
 
     public function __construct(Entity $entity, ?Player $remover = null) {
