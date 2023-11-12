@@ -14,9 +14,7 @@ use pocketmine\entity\Human;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerMoveEvent;
-use pocketmine\nbt\tag\ByteArrayTag;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\StringTag;
 use pocketmine\plugin\PluginBase;
 use pocketmine\event\Listener;
 use pocketmine\player\Player;
@@ -71,6 +69,8 @@ class HumanNPC extends PluginBase implements Listener {
                 switch ($args[0]) {
                     case 'spawn':
                     case 'create':
+                    case 'summon':
+                    case 's':
                         if (!isset($args[1])) {
                             $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc spawn <npcName: string>"));
                             break;
@@ -79,11 +79,11 @@ class HumanNPC extends PluginBase implements Listener {
                         $name = implode(" ", array_slice($args, 1));
 
                         $nbt = CompoundTag::create()
-                            ->setTag("Name", new StringTag($sender->getSkin()->getSkinId()))
-                            ->setTag("Data", new ByteArrayTag($sender->getSkin()->getSkinData()))
-                            ->setTag("CapeData", new ByteArrayTag($sender->getSkin()->getCapeData()))
-                            ->setTag("GeometryName", new StringTag($sender->getSkin()->getGeometryName()))
-                            ->setTag("GeometryData", new ByteArrayTag($sender->getSkin()->getGeometryData()))
+                            ->setString("Name", $sender->getSkin()->getSkinId())
+                            ->setByteArray("Data", $sender->getSkin()->getSkinData())
+                            ->setByteArray("CapeData", $sender->getSkin()->getCapeData())
+                            ->setString("GeometryName", $sender->getSkin()->getGeometryName())
+                            ->setByteArray("GeometryData", $sender->getSkin()->getGeometryData())
                             ->setTag("Commands", new ListTag([]));
 
                         $entity = new HumanNPCEntity(
@@ -103,6 +103,7 @@ class HumanNPC extends PluginBase implements Listener {
                         break;
                     case 'delete':
                     case 'remove':
+                    case 'r':
                         if (isset($this->npcRemover[$sender->getName()])) {
                             unset($this->npcRemover[$sender->getName()]);
                             $sender->sendMessage(TextFormat::colorize("&aYou are no longer in NPCRemover mode"));
@@ -113,6 +114,8 @@ class HumanNPC extends PluginBase implements Listener {
                         }
                         break;
                     case 'id':
+                    case 'getid':
+                    case 'gid':
                         if (isset($this->npcIdGetter[$sender->getName()])) {
                             unset($this->npcIdGetter[$sender->getName()]);
                             $sender->sendMessage(TextFormat::colorize("&aYou are no longer in NPCIDGetter mode"));
@@ -144,6 +147,8 @@ class HumanNPC extends PluginBase implements Listener {
                         break;
                     case 'entity':
                     case 'npcs':
+                    case 'getnpcs':
+                    case 'gnpc':
                         $sender->sendMessage(TextFormat::colorize("&aList of all HumanNPCs:"));
                         foreach ($this->getServer()->getWorldManager()->getWorlds() as $world) {
                             foreach ($world->getEntities() as $entity) {
@@ -161,9 +166,10 @@ class HumanNPC extends PluginBase implements Listener {
                         $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc id: &eGet id of HumanNPC"));
                         $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc tp: &eTeleport to HumanNPC"));
                         $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc npcs: &eGet id and name of all HumanNPCs in all worlds"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc edit: &eEdit NPC"));
+                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc edit: &eEdit HumanNPC"));
                         break;
                     case 'edit':
+                    case 'e':
                         if (count($args) < 3) {
                             $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc edit <npcId: int> <addcmd|removecmd|getcmd|rename|settool>"));
                             break;
@@ -172,7 +178,7 @@ class HumanNPC extends PluginBase implements Listener {
                         $id = (int) $args[1];
                         $entity = $this->getServer()->getWorldManager()->findEntity($id);
 
-                        if ($entity === null && !$entity instanceof HumanNPCEntity) {
+                        if ($entity === null || !$entity instanceof HumanNPCEntity) {
                             $sender->sendMessage(TextFormat::colorize("&aHumanNPC id not found"));
                             break;
                         }
@@ -208,6 +214,8 @@ class HumanNPC extends PluginBase implements Listener {
                             case 'getallcommand':
                             case 'getcommand':
                             case 'gcmd':
+                            case 'listcmd':
+                            case 'lcmd':
                                 $commands = $entity->getCommands();
                                 $sender->sendMessage(TextFormat::colorize("&aThat HumanNPC commands list:"));
                                 foreach ($commands as $command) {

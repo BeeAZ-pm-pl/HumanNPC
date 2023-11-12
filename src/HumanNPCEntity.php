@@ -20,22 +20,26 @@ class HumanNPCEntity extends Human {
     }
 
     public function initEntity(CompoundTag $nbt): void {
-        parent::initEntity($nbt);
-
-        if (!($commands = $nbt->getTag("Commands"))) {
-            $nbt->setTag("Commands", new ListTag([]));
+        $nbt->getListTag("Commands") !== null ?: $nbt->setTag("Commands", new ListTag([]));
+        $commands = $nbt->getListTag("Commands");
+        
+        if(($oldCommands = $nbt->getTag("commands")) !== null) {
+            $commands->push($oldCommands);
+            $nbt->removeTag("commands");
         }
 
         $this->commands = $commands;
+
         $this->setNameTagAlwaysVisible();
         $this->setNameTagVisible();
         $this->setMaxHealth(1000);
+
+        parent::initEntity($nbt);
     }
 
     public function onUpdate(int $currentTick): bool {
         $this->setMotion($this->getMotion()->withComponents(0, 0, 0));
         $this->setGravity(0.0);
-
         if ($this->isOnFire()) {
             $this->extinguish();
         }
