@@ -43,7 +43,6 @@ class HumanNPCEntity extends Human {
         if ($this->isOnFire()) {
             $this->extinguish();
         }
-
         return parent::onUpdate($currentTick);
     }
 
