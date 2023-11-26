@@ -1,8 +1,8 @@
 name: HumanNPC
 version: 0.1.1
 author: BeeAZ
-src-namespace-prefix: beeaz\humannpc
-main: beeaz\humannpc\HumanNPC
+src-namespace-prefix: BeeAZ\HumanNPC
+main: BeeAZ\HumanNPC\Loader
 api: 5.0.0
 
 commands:

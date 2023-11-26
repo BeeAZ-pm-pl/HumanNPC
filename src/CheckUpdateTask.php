@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace beeaz\humannpc;
+namespace BeeAZ\HumanNPC;
 
 use pocketmine\scheduler\AsyncTask;
 use pocketmine\Server;
