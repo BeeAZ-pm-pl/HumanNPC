@@ -8,7 +8,6 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\Server;
 use pocketmine\utils\Internet;
 use pocketmine\utils\TextFormat;
-use function is_array;
 use function json_decode;
 use function version_compare;
 use function vsprintf;
