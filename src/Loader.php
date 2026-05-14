@@ -6,6 +6,7 @@ namespace BeeAZ\HumanNPC;
 
 use BeeAZ\HumanNPC\events\HumanCreationEvent;
 use BeeAZ\HumanNPC\events\HumanRemoveEvent;
+use BeeAZ\HumanNPC\task\FetchSkinTask;
 use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
 use pocketmine\entity\EntityDataHelper;
@@ -27,24 +28,28 @@ use pocketmine\math\Vector2;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 
-class Loader extends PluginBase implements Listener {
+class Loader extends PluginBase implements Listener
+{
+
     private array $npcIdGetter = [];
     private array $npcRemover = [];
 
-    protected function onEnable(): void {
+    protected function onEnable(): void
+    {
         EntityFactory::getInstance()->register(HumanNPC::class, function (World $world, CompoundTag $nbt): HumanNPC {
             return new HumanNPC(EntityDataHelper::parseLocation($nbt, $world), Human::parseSkinNBT($nbt), $nbt);
         }, ['HumanNPC', 'humannpc', 'hnpc']);
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->getServer()->getAsyncPool()->submitTask(new CheckUpdateTask($this->getDescription()->getName(), $this->getDescription()->getVersion()));
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
+    {
         switch (strtolower($command->getName())) {
             case "runcommandas":
+            case "rca":
                 if (count($args) < 2) {
-                    $sender->sendMessage(TextFormat::colorize("&aUsage: /rca <playerName: string> <command: string>"));
+                    $sender->sendMessage(TextFormat::colorize("&cUsage: /rca <player> <command>"));
                     return true;
                 }
 
@@ -52,17 +57,19 @@ class Loader extends PluginBase implements Listener {
                 if ($player instanceof Player) {
                     $this->getServer()->dispatchCommand($player, trim(implode(" ", $args)));
                 } else {
-                    $sender->sendMessage(TextFormat::colorize("&aPlayer not found"));
+                    $sender->sendMessage(TextFormat::colorize("&cPlayer not found."));
                 }
                 return true;
+
             case "humannpc":
+            case "hnpc":
                 if (!$sender instanceof Player) {
-                    $sender->sendMessage("Please use this command in-game.");
+                    $sender->sendMessage("This command can only be used in-game.");
                     return true;
                 }
 
                 if (!isset($args[0])) {
-                    $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc help"));
+                    $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc help"));
                     return true;
                 }
 
@@ -72,7 +79,7 @@ class Loader extends PluginBase implements Listener {
                     case 'summon':
                     case 's':
                         if (!isset($args[1])) {
-                            $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc spawn <npcName: string>"));
+                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc spawn <name>"));
                             break;
                         }
 
@@ -99,79 +106,42 @@ class Loader extends PluginBase implements Listener {
 
                         $entity->spawnToAll();
 
-                        $sender->sendMessage(TextFormat::colorize("&aHumanNPC has spawned with id: &e" . $entity->getId()));
+                        $sender->sendMessage(TextFormat::colorize("&aHumanNPC spawned successfully with ID: &e" . $entity->getId()));
                         break;
+
                     case 'delete':
                     case 'remove':
                     case 'r':
                         if (isset($this->npcRemover[$sender->getName()])) {
                             unset($this->npcRemover[$sender->getName()]);
-                            $sender->sendMessage(TextFormat::colorize("&aYou are no longer in NPCRemover mode"));
+                            $sender->sendMessage(TextFormat::colorize("&aYou have exited NPC removal mode."));
                         } else {
                             $this->npcRemover[$sender->getName()] = true;
-                            $sender->sendMessage(TextFormat::colorize("&aYou are in NPCRemover mode"));
-                            $sender->sendMessage(TextFormat::colorize("&aTap a HumanNPC to delete"));
+                            $sender->sendMessage(TextFormat::colorize("&aYou have entered NPC removal mode."));
+                            $sender->sendMessage(TextFormat::colorize("&eTap a HumanNPC to delete it."));
                         }
                         break;
+
                     case 'id':
                     case 'getid':
                     case 'gid':
                         if (isset($this->npcIdGetter[$sender->getName()])) {
                             unset($this->npcIdGetter[$sender->getName()]);
-                            $sender->sendMessage(TextFormat::colorize("&aYou are no longer in NPCIDGetter mode"));
+                            $sender->sendMessage(TextFormat::colorize("&aYou have exited NPC ID getter mode."));
                         } else {
                             $this->npcIdGetter[$sender->getName()] = true;
-                            $sender->sendMessage(TextFormat::colorize("&aYou are in NPCIDGetter mode"));
-                            $sender->sendMessage(TextFormat::colorize("&aTap on HumanNPC to get its ID"));
+                            $sender->sendMessage(TextFormat::colorize("&aYou have entered NPC ID getter mode."));
+                            $sender->sendMessage(TextFormat::colorize("&eTap a HumanNPC to get its ID."));
                         }
                         break;
+
                     case 'teleport':
                     case 'tp':
                     case 'goto':
                     case 'tpto':
                         if (!isset($args[1])) {
-                            $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc tp <npcId: int>\n&aUse '/humannpc npcs' to get id and name of all HumanNPCs in all worlds"));
-                            break;
-                        }
-
-                        $id = (int) $args[1];
-                        $entity = $this->getServer()->getWorldManager()->findEntity($id);
-
-                        if ($entity === null && !$entity instanceof HumanNPC) {
-                            $sender->sendMessage(TextFormat::colorize("&aHumanNPC id not found"));
-                            break;
-                        }
-
-                        $sender->teleport($entity->getLocation());
-                        $sender->sendMessage(TextFormat::colorize('&aTeleported to HumanNPC ' . $entity->getNameTag() . ' successfully'));
-                        break;
-                    case 'entity':
-                    case 'npcs':
-                    case 'getnpcs':
-                    case 'gnpc':
-                        $sender->sendMessage(TextFormat::colorize("&aList of all HumanNPCs:"));
-                        foreach ($this->getServer()->getWorldManager()->getWorlds() as $world) {
-                            foreach ($world->getEntities() as $entity) {
-                                if ($entity instanceof HumanNPC && !$entity->isClosed()) {
-                                    $sender->sendMessage(TextFormat::colorize("&a+ &cHumanNPC: " . $entity->getNameTag() . " - Id: " . $entity->getId()));
-                                }
-                            }
-                        }
-                        break;
-                    case '?':
-                    case 'help':
-                        $sender->sendMessage(TextFormat::colorize("&aHumanNPC commands list:"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc spawn: &eCreate HumanNPC"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc delete: &eDelete HumanNPC"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc id: &eGet id of HumanNPC"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc tp: &eTeleport to HumanNPC"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc npcs: &eGet id and name of all HumanNPCs in all worlds"));
-                        $sender->sendMessage(TextFormat::colorize("&a+ &c/humannpc edit: &eEdit HumanNPC"));
-                        break;
-                    case 'edit':
-                    case 'e':
-                        if (count($args) < 3) {
-                            $sender->sendMessage(TextFormat::colorize("&aUsage: /humannpc edit <npcId: int> <addcmd|removecmd|getcmd|rename|settool>"));
+                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc tp <npcId>"));
+                            $sender->sendMessage(TextFormat::colorize("&cUse '/hnpc npcs' to get a list of all NPCs."));
                             break;
                         }
 
@@ -179,11 +149,79 @@ class Loader extends PluginBase implements Listener {
                         $entity = $this->getServer()->getWorldManager()->findEntity($id);
 
                         if ($entity === null || !$entity instanceof HumanNPC) {
-                            $sender->sendMessage(TextFormat::colorize("&aHumanNPC id not found"));
+                            $sender->sendMessage(TextFormat::colorize("&cHumanNPC with the specified ID was not found."));
+                            break;
+                        }
+
+                        $sender->teleport($entity->getLocation());
+                        $sender->sendMessage(TextFormat::colorize("&aTeleported to HumanNPC: &f" . $entity->getNameTag()));
+                        break;
+
+                    case 'entity':
+                    case 'npcs':
+                    case 'getnpcs':
+                    case 'gnpc':
+                        $sender->sendMessage(TextFormat::colorize("&aList of all active HumanNPCs:"));
+                        foreach ($this->getServer()->getWorldManager()->getWorlds() as $world) {
+                            foreach ($world->getEntities() as $entity) {
+                                if ($entity instanceof HumanNPC && !$entity->isClosed()) {
+                                    $sender->sendMessage(TextFormat::colorize("&a+ &f" . $entity->getNameTag() . " &7- ID: &e" . $entity->getId()));
+                                }
+                            }
+                        }
+                        break;
+
+                    case '?':
+                    case 'help':
+                        $sender->sendMessage(TextFormat::colorize("&a--- HumanNPC Advanced Guide ---"));
+                        $sender->sendMessage(TextFormat::colorize("&e1. Basic Management:"));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc spawn <name> &7- Spawn an NPC matching your skin."));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc id &7- Toggle ID Mode (Hit an NPC to get its ID)."));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc delete &7- Toggle Delete Mode (Hit an NPC to remove)."));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc npcs &7- List all NPCs / &f/hnpc tp <id> &7- Teleport to NPC."));
+                        $sender->sendMessage(TextFormat::colorize("&e2. Editing Appearance (/hnpc edit <id>):"));
+                        $sender->sendMessage(TextFormat::colorize("&f... rename <name> &7- Change the name of the NPC."));
+                        $sender->sendMessage(TextFormat::colorize("&f... settool &7- Give the NPC the item you are holding."));
+                        $sender->sendMessage(TextFormat::colorize("&f... setskin <url> &7- Update skin via a direct PNG link."));
+                        $sender->sendMessage(TextFormat::colorize("&e3. Click Commands (addcmd):"));
+                        $sender->sendMessage(TextFormat::colorize("&7Commands run as Console by default. Use &b{player} &7for the clicker's name."));
+                        $sender->sendMessage(TextFormat::colorize("&a> Run as System (Console):"));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc edit <id> addcmd give {player} diamond_sword 1"));
+                        $sender->sendMessage(TextFormat::colorize("&a> Force Player to Run Command (Using RCA):"));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc edit <id> addcmd rca {player} shop"));
+                        $sender->sendMessage(TextFormat::colorize("&e4. Managing Commands:"));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc edit <id> listcmd &7- View all assigned commands."));
+                        $sender->sendMessage(TextFormat::colorize("&f/hnpc edit <id> removecmd <command> &7- Remove a specific command."));
+                        break;
+
+                    case 'edit':
+                    case 'e':
+                        if (count($args) < 3) {
+                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
+                            break;
+                        }
+
+                        $id = (int) $args[1];
+                        $entity = $this->getServer()->getWorldManager()->findEntity($id);
+
+                        if ($entity === null || !$entity instanceof HumanNPC) {
+                            $sender->sendMessage(TextFormat::colorize("&cHumanNPC with the specified ID was not found."));
                             break;
                         }
 
                         switch ($args[2]) {
+                            case 'setskin':
+                            case 'skin':
+                                if (!isset($args[3])) {
+                                    $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> setskin <url>"));
+                                    break;
+                                }
+
+                                $url = trim($args[3]);
+                                $sender->sendMessage(TextFormat::colorize("&eDownloading and applying skin..."));
+                                $this->getServer()->getAsyncPool()->submitTask(new FetchSkinTask($url, $id, $sender->getName()));
+                                break;
+
                             case 'setcmd':
                             case 'setcommand':
                             case 'command':
@@ -191,25 +229,26 @@ class Loader extends PluginBase implements Listener {
                             case 'acmd':
                             case 'addcmd':
                                 if (!isset($args[3])) {
-                                    $sender->sendMessage(TextFormat::colorize('&aUsage: /humannpc edit <npcId: int> addcmd <command: string>'));
+                                    $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> addcmd <command>"));
                                     break;
                                 }
 
                                 $cmd = trim(implode(" ", array_slice($args, 3)));
                                 $entity->addCommand($sender, $cmd);
                                 break;
+
                             case 'removecommand':
                             case 'removecmd':
                             case 'rcmd':
                                 if (!isset($args[3])) {
-                                    $sender->sendMessage(TextFormat::colorize('&aUsage: /humannpc edit <npcId: int> removecmd <command: string>'));
+                                    $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> removecmd <command>"));
                                     break;
                                 }
 
                                 $cmd = trim(implode(" ", array_slice($args, 3)));
                                 $entity->removeCommand($sender, $cmd);
                                 break;
-                                break;
+
                             case 'getcmd':
                             case 'getallcommand':
                             case 'getcommand':
@@ -217,35 +256,38 @@ class Loader extends PluginBase implements Listener {
                             case 'listcmd':
                             case 'lcmd':
                                 $commands = $entity->getCommands();
-                                $sender->sendMessage(TextFormat::colorize("&aThat HumanNPC commands list:"));
+                                $sender->sendMessage(TextFormat::colorize("&aCommand list for this HumanNPC:"));
                                 foreach ($commands as $command) {
-                                    $sender->sendMessage(TextFormat::colorize("&a+ &c" . $command));
+                                    $sender->sendMessage(TextFormat::colorize("&a+ &e" . $command));
                                 }
                                 break;
+
                             case 'name':
                             case 'rename':
                                 if (!isset($args[3])) {
-                                    $sender->sendMessage(TextFormat::colorize('&aUsage: /humannpc edit <npcId: int> name <npcName: string>'));
+                                    $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> rename <name>"));
                                     break;
                                 }
 
                                 $name = trim(implode(" ", array_slice($args, 3)));
                                 $entity->updateName($sender, $name);
                                 break;
+
                             case 'settool':
                             case 'tool':
                             case 'addtool':
                             case 'sethand':
                             case 'hand':
                                 if ($sender->getInventory()->getItemInHand()->equals(VanillaItems::AIR())) {
-                                    $sender->sendMessage(TextFormat::colorize('&aHold an item in your hand'));
+                                    $sender->sendMessage(TextFormat::colorize("&cYou must hold an item in your hand."));
                                     break;
                                 }
 
                                 $entity->updateTool($sender, $sender->getInventory()->getItemInHand());
                                 break;
+
                             default:
-                                $sender->sendMessage(TextFormat::colorize('&aUsage: /humannpc edit <npcId: int> <addcmd|removecmd|getcmd|rename|settool>'));
+                                $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
                                 break;
                         }
                         break;
@@ -256,15 +298,16 @@ class Loader extends PluginBase implements Listener {
         return false;
     }
 
-    public function onEntityDamage(EntityDamageEvent $event): void {
+    public function onEntityDamage(EntityDamageEvent $event): void
+    {
         if ($event instanceof EntityDamageByEntityEvent) {
             $damager = $event->getDamager();
             $entity = $event->getEntity();
 
-            if ($damager instanceof Player and $entity instanceof HumanNPC) {
+            if ($damager instanceof Player && $entity instanceof HumanNPC) {
                 $event->cancel();
 
-                if (($commands = $entity->getCommands()) != [] and !isset($this->npcIdGetter[$damager->getName()]) and !isset($this->npcRemover[$damager->getName()])) {
+                if (($commands = $entity->getCommands()) !== [] && !isset($this->npcIdGetter[$damager->getName()]) && !isset($this->npcRemover[$damager->getName()])) {
                     foreach ($commands as $command) {
                         $this->getServer()->dispatchCommand(new ConsoleCommandSender($this->getServer(), $this->getServer()->getLanguage()), str_replace('{player}', '"' . $damager->getName() . '"', $command));
                     }
@@ -272,7 +315,7 @@ class Loader extends PluginBase implements Listener {
 
                 if (isset($this->npcIdGetter[$damager->getName()])) {
                     $event->cancel();
-                    $damager->sendMessage(TextFormat::colorize("&aThat HumanNPC id is: " . $entity->getId()));
+                    $damager->sendMessage(TextFormat::colorize("&aThe ID of this HumanNPC is: &e" . $entity->getId()));
                     unset($this->npcIdGetter[$damager->getName()]);
                 }
 
@@ -281,14 +324,15 @@ class Loader extends PluginBase implements Listener {
                     $ev = new HumanRemoveEvent($entity, $damager);
                     $ev->call();
                     $entity->close();
-                    $damager->sendMessage(TextFormat::colorize("&aHumanNPC removed successfully"));
+                    $damager->sendMessage(TextFormat::colorize("&aHumanNPC removed successfully."));
                     unset($this->npcRemover[$damager->getName()]);
                 }
             }
         }
     }
 
-    public function onPlayerMove(PlayerMoveEvent $event): void {
+    public function onPlayerMove(PlayerMoveEvent $event): void
+    {
         $player = $event->getPlayer();
         $from = $event->getFrom();
         $to = $event->getTo();
