@@ -28,23 +28,21 @@ use pocketmine\math\Vector2;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 
-class Loader extends PluginBase implements Listener
-{
+class Loader extends PluginBase implements Listener {
 
     private array $npcIdGetter = [];
     private array $npcRemover = [];
 
-    protected function onEnable(): void
-    {
+    protected function onEnable(): void {
         EntityFactory::getInstance()->register(HumanNPC::class, function (World $world, CompoundTag $nbt): HumanNPC {
             return new HumanNPC(EntityDataHelper::parseLocation($nbt, $world), Human::parseSkinNBT($nbt), $nbt);
         }, ['HumanNPC', 'humannpc', 'hnpc']);
 
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
+        $this->getServer()->getAsyncPool()->submitTask(new CheckUpdateTask($this->getDescription()->getName(), $this->getDescription()->getVersion()));
     }
 
-    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool
-    {
+    public function onCommand(CommandSender $sender, Command $command, string $label, array $args): bool {
         switch (strtolower($command->getName())) {
             case "runcommandas":
             case "rca":
@@ -181,6 +179,7 @@ class Loader extends PluginBase implements Listener
                         $sender->sendMessage(TextFormat::colorize("&f/hnpc npcs &7- List all NPCs / &f/hnpc tp <id> &7- Teleport to NPC."));
                         $sender->sendMessage(TextFormat::colorize("&e2. Editing Appearance (/hnpc edit <id>):"));
                         $sender->sendMessage(TextFormat::colorize("&f... rename <name> &7- Change the name of the NPC."));
+                        $sender->sendMessage(TextFormat::colorize("&f... nametag &7- Toggle nametag visibility (Always/Hover)."));
                         $sender->sendMessage(TextFormat::colorize("&f... settool &7- Give the NPC the item you are holding."));
                         $sender->sendMessage(TextFormat::colorize("&f... setskin <url> &7- Update skin via a direct PNG link."));
                         $sender->sendMessage(TextFormat::colorize("&e3. Click Commands (addcmd):"));
@@ -197,7 +196,7 @@ class Loader extends PluginBase implements Listener
                     case 'edit':
                     case 'e':
                         if (count($args) < 3) {
-                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
+                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|nametag|settool|setskin>"));
                             break;
                         }
 
@@ -286,8 +285,14 @@ class Loader extends PluginBase implements Listener
                                 $entity->updateTool($sender, $sender->getInventory()->getItemInHand());
                                 break;
 
+                            case 'togglenametag':
+                            case 'nametagvis':
+                            case 'nametag':
+                                $entity->toggleNameTagVisibility($sender);
+                                break;
+
                             default:
-                                $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
+                                $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|nametag|settool|setskin>"));
                                 break;
                         }
                         break;
@@ -298,8 +303,7 @@ class Loader extends PluginBase implements Listener
         return false;
     }
 
-    public function onEntityDamage(EntityDamageEvent $event): void
-    {
+    public function onEntityDamage(EntityDamageEvent $event): void {
         if ($event instanceof EntityDamageByEntityEvent) {
             $damager = $event->getDamager();
             $entity = $event->getEntity();
@@ -331,8 +335,7 @@ class Loader extends PluginBase implements Listener
         }
     }
 
-    public function onPlayerMove(PlayerMoveEvent $event): void
-    {
+    public function onPlayerMove(PlayerMoveEvent $event): void {
         $player = $event->getPlayer();
         $from = $event->getFrom();
         $to = $event->getTo();
