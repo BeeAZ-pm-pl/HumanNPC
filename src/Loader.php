@@ -179,6 +179,7 @@ class Loader extends PluginBase implements Listener {
                         $sender->sendMessage(TextFormat::colorize("&f/hnpc npcs &7- List all NPCs / &f/hnpc tp <id> &7- Teleport to NPC."));
                         $sender->sendMessage(TextFormat::colorize("&e2. Editing Appearance (/hnpc edit <id>):"));
                         $sender->sendMessage(TextFormat::colorize("&f... rename <name> &7- Change the name of the NPC."));
+                        $sender->sendMessage(TextFormat::colorize("&f... nametag &7- Toggle nametag visibility (Always/Hover)."));
                         $sender->sendMessage(TextFormat::colorize("&f... settool &7- Give the NPC the item you are holding."));
                         $sender->sendMessage(TextFormat::colorize("&f... setskin <url> &7- Update skin via a direct PNG link."));
                         $sender->sendMessage(TextFormat::colorize("&e3. Click Commands (addcmd):"));
@@ -195,7 +196,7 @@ class Loader extends PluginBase implements Listener {
                     case 'edit':
                     case 'e':
                         if (count($args) < 3) {
-                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
+                            $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|nametag|settool|setskin>"));
                             break;
                         }
 
@@ -284,8 +285,14 @@ class Loader extends PluginBase implements Listener {
                                 $entity->updateTool($sender, $sender->getInventory()->getItemInHand());
                                 break;
 
+                            case 'togglenametag':
+                            case 'nametagvis':
+                            case 'nametag':
+                                $entity->toggleNameTagVisibility($sender);
+                                break;
+
                             default:
-                                $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|settool|setskin>"));
+                                $sender->sendMessage(TextFormat::colorize("&cUsage: /hnpc edit <npcId> <addcmd|removecmd|listcmd|rename|nametag|settool|setskin>"));
                                 break;
                         }
                         break;

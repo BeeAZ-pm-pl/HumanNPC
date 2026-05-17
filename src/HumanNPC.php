@@ -30,7 +30,7 @@ class HumanNPC extends Human {
 
         $this->commands = $commands;
 
-        $this->setNameTagAlwaysVisible();
+        $this->setNameTagAlwaysVisible($nbt->getByte("NameTagAlwaysVisible", 1) === 1);
         $this->setNameTagVisible();
         $this->setMaxHealth(1000);
 
@@ -49,6 +49,7 @@ class HumanNPC extends Human {
     public function saveNBT(): CompoundTag {
         $nbt = parent::saveNBT();
         $nbt->setTag("Commands", $this->commands);
+        $nbt->setByte("NameTagAlwaysVisible", $this->isNameTagAlwaysVisible() ? 1 : 0);
         return $nbt;
     }
 
@@ -84,5 +85,11 @@ class HumanNPC extends Human {
     public function updateTool(CommandSender $sender, Item $item): void {
         $this->getInventory()->setItemInHand($item);
         $sender->sendMessage(TextFormat::GREEN . 'HumanNPC tool updated successfully');
+    }
+
+    public function toggleNameTagVisibility(CommandSender $sender): void {
+        $this->setNameTagAlwaysVisible(!$this->isNameTagAlwaysVisible());
+        $status = $this->isNameTagAlwaysVisible() ? 'Always' : 'Hover/Focus';
+        $sender->sendMessage(TextFormat::GREEN . "HumanNPC nametag visibility toggled to: {$status}");
     }
 }
